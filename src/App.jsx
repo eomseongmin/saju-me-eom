@@ -77,6 +77,7 @@ function App() {
 
   return (
     <main className="app">
+      <div className="app-card">
       <h1 className="brand">사주미</h1>
       <p className="lead">정보를 입력한 뒤 아래 버튼으로 결과를 확인하세요.</p>
 
@@ -226,6 +227,7 @@ function App() {
           ) : null}
         </section>
       )}
+      </div>
     </main>
   )
 }

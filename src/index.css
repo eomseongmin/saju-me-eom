@@ -3,24 +3,21 @@
 }
 
 :root {
-  /* 살구·피치 중심, 채도 낮춘 톤 */
-  --apricot: #e8a07a;
+  --apricot: #f0c2a4;
   --apricot-deep: #d4845c;
-  --peach: #f0c2a4;
+  --peach: #f5d4bc;
   --blush: #e89a8c;
   --sand: #f3e6da;
   --ink: #3f3129;
   --ink-soft: #7a6558;
-  --surface: rgba(255, 248, 242, 0.72);
-  --surface-strong: rgba(255, 250, 245, 0.9);
+  --surface: #ffffff;
+  --surface-strong: #ffffff;
   --line: rgba(63, 49, 41, 0.14);
   --font-display: 'Gowun Batang', 'Noto Serif KR', serif;
   --font-body: 'Noto Sans KR', sans-serif;
-
-  /* 예전 변수명 호환 (컴포넌트 CSS에서 참조) */
   --coral: var(--blush);
-  --lime: #f2e4d4;
-  --mint: #ead5c4;
+  --lime: var(--sand);
+  --mint: var(--peach);
 }
 
 html,
@@ -33,12 +30,7 @@ body {
   min-height: 100vh;
   font-family: var(--font-body);
   color: var(--ink);
-  background:
-    radial-gradient(ellipse 70% 50% at 8% 0%, rgba(232, 160, 122, 0.45) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 40% at 100% 10%, rgba(216, 132, 92, 0.28) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 35% at 70% 100%, rgba(232, 154, 140, 0.22) 0%, transparent 55%),
-    linear-gradient(168deg, #f6ebe3 0%, #ecd6c4 48%, #e2c4ae 100%);
-  background-attachment: fixed;
+  background: #ffffff;
 }
 
 #root {

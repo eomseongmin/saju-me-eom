@@ -1,6 +1,7 @@
-# Env
+# Env (API 키 등 — GitHub에 올리지 않음)
 .env
-.env.*
+.env.local
+.env.*.local
 !.env.example
 
 # Logs

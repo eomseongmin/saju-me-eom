@@ -1,29 +1,17 @@
 .app {
-  position: relative;
-  max-width: 28rem;
+  max-width: 32rem;
   margin: 0 auto;
-  padding: 2.75rem 1.25rem 3.5rem;
+  padding: 2rem 1.25rem 3rem;
   color: var(--ink);
   animation: app-rise 0.7s ease-out both;
 }
 
-.app::before {
-  content: '';
-  position: fixed;
-  inset: auto -4rem 18% auto;
-  width: 11rem;
-  height: 11rem;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--apricot) 35%, transparent);
-  filter: blur(22px);
-  pointer-events: none;
-  z-index: 0;
-  animation: blob-drift 9s ease-in-out infinite alternate;
-}
-
-.app > * {
-  position: relative;
-  z-index: 1;
+.app-card {
+  padding: 1.75rem 1.35rem 2rem;
+  border: 1px solid var(--line);
+  border-radius: 1.1rem;
+  background: var(--apricot);
+  box-shadow: 0 10px 28px rgba(63, 49, 41, 0.08);
 }
 
 @keyframes app-rise {
@@ -34,15 +22,6 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes blob-drift {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-  to {
-    transform: translate(-1.5rem, 1rem) scale(1.08);
   }
 }
 
@@ -166,12 +145,7 @@
   padding: 0.9rem;
   border: 1px solid var(--line);
   border-radius: 1rem;
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--sand) 80%, white),
-    color-mix(in srgb, var(--peach) 45%, white)
-  );
-  box-shadow: 0 10px 28px rgba(90, 55, 40, 0.08);
+  background: #ffffff;
   animation: panel-in 0.35s ease-out both;
 }
 
@@ -325,26 +299,25 @@
   width: 100%;
   margin-top: 0.65rem;
   padding: 0.95rem 1rem;
-  border: none;
+  border: 1px solid color-mix(in srgb, var(--apricot-deep) 35%, white);
   border-radius: 999px;
-  background: linear-gradient(120deg, var(--apricot-deep), var(--apricot) 55%, var(--peach));
-  background-size: 160% 160%;
-  color: #fffaf5;
+  background: #ffffff;
+  color: var(--apricot-deep);
   font: inherit;
   font-weight: 700;
   letter-spacing: -0.01em;
   cursor: pointer;
-  box-shadow: 0 12px 24px color-mix(in srgb, var(--apricot-deep) 28%, transparent);
+  box-shadow: 0 6px 16px rgba(63, 49, 41, 0.08);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
-    background-position 0.35s ease;
+    background 0.2s ease;
 }
 
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  background-position: 100% 50%;
-  box-shadow: 0 16px 28px color-mix(in srgb, var(--apricot-deep) 34%, transparent);
+  background: #ffffff;
+  box-shadow: 0 10px 20px rgba(63, 49, 41, 0.12);
 }
 
 .submit-btn:focus-visible {
@@ -370,15 +343,10 @@
 .result-panel {
   margin-top: 1.75rem;
   padding: 1.3rem 1.2rem;
-  border: 1px solid color-mix(in srgb, var(--apricot) 35%, var(--line));
+  border: 1px solid color-mix(in srgb, #7eb8d9 40%, var(--line));
   border-radius: 1.15rem;
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--sand) 75%, white),
-    color-mix(in srgb, var(--peach) 40%, white) 60%,
-    color-mix(in srgb, var(--apricot) 18%, white)
-  );
-  box-shadow: 0 14px 32px rgba(80, 50, 35, 0.1);
+  background: #cfeaf8;
+  box-shadow: 0 10px 24px rgba(80, 120, 150, 0.12);
   animation: panel-in 0.45s ease-out both;
 }
 
@@ -395,7 +363,7 @@
   padding: 0.85rem 0.95rem;
   list-style: none;
   border-radius: 0.85rem;
-  background: var(--surface-strong);
+  background: #ffffff;
 }
 
 .result-panel > ul li {
@@ -505,14 +473,18 @@
 .saju-skeleton__title,
 .saju-skeleton__line {
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--sand) 80%, #d9b59a) 0%,
-    color-mix(in srgb, var(--peach) 70%, white) 45%,
-    color-mix(in srgb, var(--apricot) 45%, white) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.35s ease-in-out infinite;
+  background: #ead2be;
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .saju-skeleton__title {
@@ -543,14 +515,5 @@
 
 .saju-skeleton__line--short {
   width: 58%;
-}
-
-@keyframes skeleton-shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: -100% 0;
-  }
 }
 
