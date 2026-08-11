@@ -79,3 +79,14 @@ src/
 
 - API 키(`VITE_` 접두사)는 브라우저에 노출됩니다. 배포 시에는 서버에서 호출하는 방식을 권장합니다.
 - 현재 명식(년주·월주 등)은 데모 차트 데이터를 사용합니다. 이후 실제 사주 계산 로직으로 교체할 수 있습니다.
+
+## Netlify 배포
+
+1. Build command: `npm run build`
+2. Publish directory: `dist`
+3. Environment variables에 **반드시** 아래 이름으로 키를 넣습니다.
+   - `VITE_GEMINI_API_KEY` = (Google AI Studio API 키)
+4. 환경 변수를 추가/수정한 뒤에는 **Trigger deploy → Clear cache and deploy site**로 다시 빌드해야 합니다.  
+   (Vite는 키가 빌드 시점에 코드에 들어갑니다. 배포 후에만 키를 넣으면 반영되지 않습니다.)
+
+`netlify.toml`이 위 설정을 포함합니다.
