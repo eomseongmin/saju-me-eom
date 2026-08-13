@@ -1,14 +1,3 @@
--- Table Editor 대신 SQL Editor에서 실행해도 됩니다.
--- RLS는 오늘 실습용으로 끕니다.
-
-create table if not exists public.readings (
-  id bigint generated always as identity primary key,
-  name text,
-  birth date,
-  birth_time text,
-  gender text,
-  result text,
-  created_at timestamptz default now()
-);
-
-alter table public.readings disable row level security;
+-- 예전 readings만 만들던 파일입니다.
+-- 지금은 supabase/schema.sql 을 SQL Editor에서 실행하세요.
+-- (users 테이블 + readings.user_id 연결 + RLS)

@@ -4,13 +4,12 @@
 
 ## 주요 기능
 
-- 사주 정보 입력 폼 (이름, 생년월일, 시간, 성별, 양력/음력)
-- 생년월일: 연도 → 월 → 일 순서 선택 피커
-- 태어난 시간 **모름** 옵션 (시주 없이 해석)
-- Gemini 스트리밍 해석 (글자가 나오는 대로 표시)
-- 대기 중 스켈레톤 UI
-- 마크다운을 읽기 좋은 문단/제목으로 렌더링
-- 흰색 배경 + 살구색 입력 카드 + 하늘색 결과 카드 UI
+- 이메일 로그인 / 회원가입
+- `users` 프로필(이름, 생년월일, 시간, 성별, 양력/음력) 저장 후 재사용
+- 첫 로그인 시 필수 정보 입력 모달
+- 프로필에서 정보 수정
+- Gemini 스트리밍 사주 해석
+- `readings`에 풀이 저장 (`user_id`로 프로필과 연결)
 
 ## 시작하기
 
@@ -35,29 +34,15 @@ VITE_SUPABASE_ANON_KEY=your_anon_key_here
 
 키를 바꾼 뒤에는 **반드시 `npm run dev`를 끄고 다시** 실행하세요.
 
-## Supabase 세팅 (readings)
+## Supabase 세팅
 
-1. [supabase.com](https://supabase.com) → **New project**
-   - 이름: `saju-me`
-   - 리전: **Seoul**
-   - DB 비밀번호는 메모해 두세요.
-2. **Table Editor**에서 `readings` 테이블 생성. 열 5개:
-
-   | 열 이름 | 타입 | 설명 |
-   |---------|------|------|
-   | `name` | text | 이름 |
-   | `birth` | date | 생년월일 |
-   | `birth_time` | text | 시간 또는 `모름` |
-   | `gender` | text | `male` / `female` |
-   | `result` | text | AI 사주 풀이 전문 |
-
-   SQL Editor를 쓰면 `supabase/readings.sql`을 실행해도 됩니다.  
-   **RLS는 오늘 체크 해제**(끄기).
-3. Table Editor → **Insert row**로 가짜 데이터 1줄 넣어 보기.
-4. **Project Settings → API**에서
-   - Project URL → `.env`의 `VITE_SUPABASE_URL`
-   - anon public key → `.env`의 `VITE_SUPABASE_ANON_KEY`
-5. 저장 후 개발 서버 재시작 → 앱에서 **이 풀이 저장하기**
+1. 프로젝트 `saju-me` (Seoul)
+2. **SQL Editor**에서 `supabase/schema.sql` 전체를 실행
+   - `users`: 프로필
+   - `readings`: 풀이 + `user_id` → `users.id`
+3. **Authentication → Providers → Email**
+   - 로컬 테스트면 **Confirm email** 끄기 (안 끄면 가입 후 메일 확인 필요)
+4. `.env`에 `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`(publishable) 넣고 서버 재시작
 
 ### 3. 개발 서버 실행
 
@@ -96,12 +81,15 @@ npm run dev
 
 ```
 src/
-  App.jsx              # 입력 폼 + 결과 화면
+  App.jsx              # 로그인 이후 홈/프로필/결과
+  AuthScreen.jsx       # 로그인·회원가입
+  ProfileModal.jsx     # 첫 정보 입력 모달
+  ProfilePage.jsx      # 프로필 수정
+  ProfileFields.jsx    # 공통 입력 필드
   BirthDatePicker.jsx  # 생년월일 피커
-  fetchSajuReading.js  # Gemini 프롬프트/스트리밍 호출
-  SajuReading.jsx      # 해석 텍스트 렌더링
-  ResultSkeleton.jsx   # 로딩 스켈레톤
-  App.css / index.css  # 스타일
+  fetchSajuReading.js  # Gemini 호출
+  SajuReading.jsx      # 해석 렌더링
+  supabase.js          # Supabase 클라이언트
 ```
 
 ## 참고
@@ -114,10 +102,22 @@ src/
 1. Build command: `npm run build`
 2. Publish directory: `dist`
 3. Environment variables에 **반드시** 아래 이름으로 키를 넣습니다.
-   - `VITE_GEMINI_API_KEY` = (Google AI Studio API 키)
+   - `VITE_GEMINI_API_KEY`
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
 4. 환경 변수를 추가/수정한 뒤에는 **Trigger deploy → Clear cache and deploy site**로 다시 빌드해야 합니다.  
    (Vite는 키가 빌드 시점에 코드에 들어갑니다. 배포 후에만 키를 넣으면 반영되지 않습니다.)
 
 `netlify.toml`이 위 설정을 포함합니다.
+
+## Vercel 배포
+
+1. GitHub 연동 후 Framework Preset: **Vite**, Output: **dist**
+2. **Settings → Environment Variables**에 추가 (Production / Preview 모두):
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY` (publishable)
+   - `VITE_GEMINI_API_KEY`
+3. 변수를 넣은 뒤 **Deployments → Redeploy** (없으면 빌드에 키가 안 들어감)
+4. Supabase Authentication → URL Configuration에 Vercel 주소 추가
+   - Site URL: `https://내프로젝트.vercel.app`
+   - Redirect URLs: `https://내프로젝트.vercel.app/**`
