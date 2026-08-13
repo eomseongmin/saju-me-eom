@@ -22,14 +22,42 @@ npm install
 
 ### 2. API 키 설정
 
-프로젝트 루트에 `.env` 파일을 만들고 Google AI Studio에서 발급한 Gemini API 키를 넣습니다.
+프로젝트 루트 `.env` 예시:
 
 ```env
 VITE_GEMINI_API_KEY=your_api_key_here
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
 ```
 
 `.env.example`을 참고해도 됩니다.  
 `.env`는 Git에 올리지 않습니다 (`.gitignore`에 포함).
+
+키를 바꾼 뒤에는 **반드시 `npm run dev`를 끄고 다시** 실행하세요.
+
+## Supabase 세팅 (readings)
+
+1. [supabase.com](https://supabase.com) → **New project**
+   - 이름: `saju-me`
+   - 리전: **Seoul**
+   - DB 비밀번호는 메모해 두세요.
+2. **Table Editor**에서 `readings` 테이블 생성. 열 5개:
+
+   | 열 이름 | 타입 | 설명 |
+   |---------|------|------|
+   | `name` | text | 이름 |
+   | `birth` | date | 생년월일 |
+   | `birth_time` | text | 시간 또는 `모름` |
+   | `gender` | text | `male` / `female` |
+   | `result` | text | AI 사주 풀이 전문 |
+
+   SQL Editor를 쓰면 `supabase/readings.sql`을 실행해도 됩니다.  
+   **RLS는 오늘 체크 해제**(끄기).
+3. Table Editor → **Insert row**로 가짜 데이터 1줄 넣어 보기.
+4. **Project Settings → API**에서
+   - Project URL → `.env`의 `VITE_SUPABASE_URL`
+   - anon public key → `.env`의 `VITE_SUPABASE_ANON_KEY`
+5. 저장 후 개발 서버 재시작 → 앱에서 **이 풀이 저장하기**
 
 ### 3. 개발 서버 실행
 
@@ -61,6 +89,7 @@ npm run dev
 
 - React 19 + Vite 8
 - `@google/genai` (Gemini API, 스트리밍)
+- `@supabase/supabase-js` (풀이 저장)
 - 순수 CSS (살구/하늘색 카드 UI)
 
 ## 프로젝트 구조 (주요 파일)
@@ -86,6 +115,8 @@ src/
 2. Publish directory: `dist`
 3. Environment variables에 **반드시** 아래 이름으로 키를 넣습니다.
    - `VITE_GEMINI_API_KEY` = (Google AI Studio API 키)
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
 4. 환경 변수를 추가/수정한 뒤에는 **Trigger deploy → Clear cache and deploy site**로 다시 빌드해야 합니다.  
    (Vite는 키가 빌드 시점에 코드에 들어갑니다. 배포 후에만 키를 넣으면 반영되지 않습니다.)
 

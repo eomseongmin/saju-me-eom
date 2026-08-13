@@ -3,6 +3,7 @@ import BirthDatePicker from './BirthDatePicker'
 import { fetchSajuReading } from './fetchSajuReading'
 import ResultSkeleton from './ResultSkeleton'
 import SajuReading from './SajuReading'
+import { supabase } from './supabase'
 import './App.css'
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [sajuText, setSajuText] = useState('')
+  const [saving, setSaving] = useState(false)
 
   // 필수 값이 다 채워졌는지 확인 (시간은 '모름'도 허용)
   const isFormComplete =
@@ -73,6 +75,26 @@ function App() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function saveReading() {
+    if (!sajuText || loading || saving) return
+
+    setSaving(true)
+    const { error: saveError } = await supabase.from('readings').insert({
+      name: name.trim(),
+      birth: birthDate,
+      birth_time: birthTimeLabel,
+      gender,
+      result: sajuText,
+    })
+    setSaving(false)
+
+    if (saveError) {
+      alert('저장 실패: ' + saveError.message)
+      return
+    }
+    alert('저장 완료! 🔮')
   }
 
   return (
@@ -223,7 +245,19 @@ function App() {
           {loading && !sajuText ? (
             <ResultSkeleton />
           ) : sajuText ? (
-            <SajuReading text={sajuText} streaming={loading} />
+            <>
+              <SajuReading text={sajuText} streaming={loading} />
+              {!loading && (
+                <button
+                  type="button"
+                  className="save-btn"
+                  onClick={saveReading}
+                  disabled={saving}
+                >
+                  {saving ? '저장 중…' : '이 풀이 저장하기'}
+                </button>
+              )}
+            </>
           ) : null}
         </section>
       )}
