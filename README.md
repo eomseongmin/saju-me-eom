@@ -1,4 +1,4 @@
-# 사주미 (saju-me)
+# 엄성민의 사주 (saju-me)
 
 이름·생년월일·시간·성별·양력/음력을 입력하면 Gemini API로 사주 기본차트 해석을 받아보는 React 앱입니다.
 
@@ -53,7 +53,7 @@ VITE_SUPABASE_ANON_KEY=your_anon_key_here
 Google Cloud에서 Client ID / Secret을 만든 뒤, Supabase Google provider에 넣습니다.
 
 1. [Google Cloud Console](https://console.cloud.google.com) → 프로젝트
-2. **OAuth 동의 화면** — External, 앱 이름 `사주미`, 테스트 사용자에 본인 이메일
+2. **OAuth 동의 화면** — External, 앱 이름 `엄성민의 사주`, 테스트 사용자에 본인 이메일
 3. **OAuth 클라이언트 ID** (웹 애플리케이션)
    - 승인된 자바스크립트 원본:
      - `http://localhost:5173`
