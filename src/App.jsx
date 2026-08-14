@@ -296,7 +296,7 @@ function App() {
     return (
       <main className="auth-screen">
         <div className="auth-card">
-          <h1 className="brand">성민이의 점집</h1>
+          <h1 className="brand">엄성민이의 점집</h1>
           <p className="auth-desc">
             배포 환경 변수가 없습니다. Vercel에 아래 값을 넣고 다시 배포해 주세요.
           </p>
@@ -339,7 +339,7 @@ function App() {
       <main className="app">
         <header className="topbar">
           <button type="button" className="topbar-brand" onClick={() => setView('home')}>
-            성민이의 점집
+            엄성민이의 점집
           </button>
           <div className="topbar-actions">
             <button
@@ -384,7 +384,7 @@ function App() {
 
             <section className="panel">
               <div className="app-header">
-                <h1 className="brand">성민이의 점집</h1>
+                <h1 className="brand">엄성민이의 점집</h1>
                 {profile ? (
                   <p className="lead">{profile.name}님, 저장된 정보로 사주를 볼게요.</p>
                 ) : (
