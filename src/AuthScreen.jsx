@@ -59,7 +59,7 @@ function AuthScreen() {
     <main className="auth-screen">
       <div className="auth-card">
         <p className="auth-eyebrow">사주 해석 서비스</p>
-        <h1 className="brand">엄성민의 사주</h1>
+        <h1 className="brand">성민이의 점집</h1>
         <p className="auth-desc">로그인하면 내 정보로 바로 사주를 볼 수 있어요.</p>
 
         <button
