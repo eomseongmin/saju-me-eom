@@ -1,5 +1,8 @@
 import { GoogleGenAI } from '@google/genai/web'
 
+/** 신규 키에서는 2.5-flash가 막혀서 3.5-flash 사용 */
+const GEMINI_MODEL = 'gemini-3.5-flash'
+
 function getApiKey() {
   // 과거 오타(GEMENI)도 함께 지원
   const key = (
@@ -166,7 +169,7 @@ export async function fetchSajuReading({
   // 1) 스트리밍 (글자가 나오는 대로 화면 갱신)
   try {
     const stream = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      model: GEMINI_MODEL,
       contents: prompt,
     })
 
@@ -188,7 +191,7 @@ export async function fetchSajuReading({
   // 2) 폴백: 한 번에 받기
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: GEMINI_MODEL,
       contents: prompt,
     })
     const text = response?.text?.trim()
@@ -231,7 +234,7 @@ ${resultText.slice(0, 2500)}`
   const ai = new GoogleGenAI({ apiKey })
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: GEMINI_MODEL,
       contents: prompt,
     })
     const text = (response?.text || '').trim().replace(/^["'「『]|["'」』]$/g, '')
