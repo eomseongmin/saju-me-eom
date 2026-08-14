@@ -1,7 +1,15 @@
 import { GoogleGenAI } from '@google/genai/web'
 
-/** 신규 키에서는 2.5-flash가 막혀서 3.5-flash 사용 */
-const GEMINI_MODEL = 'gemini-3.5-flash'
+/**
+ * 최신 → 안정 순 폴백.
+ * 3.5-flash는 신규 키/피크타임에 503이 잦아서 여러 모델을 돌려쓴다.
+ */
+const GEMINI_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash',
+]
 
 function getApiKey() {
   // 과거 오타(GEMENI)도 함께 지원
@@ -18,10 +26,77 @@ function formatApiError(err) {
   if (/api key|API_KEY|PERMISSION_DENIED|401|403|UNAUTHENTICATED/i.test(message)) {
     return 'API 키가 거부되었습니다. Google AI Studio에서 Gemini API 키를 다시 복사해 .env의 VITE_GEMINI_API_KEY에 넣고, 개발 서버를 재시작해 주세요.'
   }
+  if (/503|UNAVAILABLE|high demand|overloaded|capacity/i.test(message)) {
+    return 'Gemini 서버가 잠시 붐빕니다. 몇 초 뒤 다시 시도해 주세요.'
+  }
+  if (/404|NOT_FOUND|no longer available/i.test(message)) {
+    return '사용 가능한 Gemini 모델을 찾지 못했습니다. 잠시 후 다시 시도해 주세요.'
+  }
   if (/Failed to fetch|NetworkError|CORS/i.test(message)) {
     return '네트워크 오류로 Gemini에 연결하지 못했습니다. 인터넷 연결과 브라우저 콘솔을 확인해 주세요.'
   }
   return message
+}
+
+function isRetryableModelError(err) {
+  const message = err?.message || String(err)
+  return /503|UNAVAILABLE|high demand|overloaded|404|NOT_FOUND|no longer available|RESOURCE_EXHAUSTED|429/i.test(
+    message,
+  )
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function createAiClient(apiKey) {
+  return new GoogleGenAI({ apiKey })
+}
+
+async function generateText(ai, prompt, { stream = false, onChunk } = {}) {
+  let lastError = null
+
+  for (const model of GEMINI_MODELS) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        if (stream) {
+          const responseStream = await ai.models.generateContentStream({
+            model,
+            contents: prompt,
+          })
+          let full = ''
+          for await (const chunk of responseStream) {
+            const piece = chunk?.text || ''
+            if (!piece) continue
+            full += piece
+            onChunk?.(full)
+          }
+          const text = full.trim()
+          if (text) {
+            console.info('[saju] model ok:', model)
+            return text
+          }
+        } else {
+          const response = await ai.models.generateContent({
+            model,
+            contents: prompt,
+          })
+          const text = response?.text?.trim()
+          if (text) {
+            console.info('[saju] model ok:', model)
+            return text
+          }
+        }
+      } catch (err) {
+        lastError = err
+        console.error(`[saju] ${model} 시도 ${attempt + 1} 실패:`, err)
+        if (!isRetryableModelError(err)) break
+        if (attempt === 0) await sleep(700)
+      }
+    }
+  }
+
+  throw lastError || new Error('Gemini 응답이 비었습니다.')
 }
 
 /** 생년월일로 만 나이 계산 */
@@ -163,51 +238,25 @@ export async function fetchSajuReading({
     chartBlock,
   })
 
-  const ai = new GoogleGenAI({ apiKey })
-  let lastError = null
+  const ai = createAiClient(apiKey)
 
-  // 1) 스트리밍 (글자가 나오는 대로 화면 갱신)
   try {
-    const stream = await ai.models.generateContentStream({
-      model: GEMINI_MODEL,
-      contents: prompt,
-    })
-
-    let full = ''
-    for await (const chunk of stream) {
-      const piece = chunk?.text || ''
-      if (!piece) continue
-      full += piece
-      onChunk?.(full)
-    }
-
-    const text = full.trim()
-    if (text) return text
-  } catch (err) {
-    lastError = err
-    console.error('[saju] stream 실패:', err)
-  }
-
-  // 2) 폴백: 한 번에 받기
-  try {
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: prompt,
-    })
-    const text = response?.text?.trim()
-    if (text) {
+    // 1) 스트리밍
+    return await generateText(ai, prompt, { stream: true, onChunk })
+  } catch (streamErr) {
+    console.error('[saju] stream 실패, 일반 호출로 재시도:', streamErr)
+    try {
+      // 2) 폴백: 한 번에 받기
+      const text = await generateText(ai, prompt, { stream: false })
       onChunk?.(text)
       return text
+    } catch (err) {
+      throw new Error(
+        formatApiError(err) ||
+          '사주 결과를 받지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      )
     }
-  } catch (err) {
-    lastError = err
-    console.error('[saju] generateContent 실패:', err)
   }
-
-  throw new Error(
-    formatApiError(lastError) ||
-      '사주 결과를 받지 못했습니다. 잠시 후 다시 시도해 주세요.',
-  )
 }
 
 /**
@@ -261,13 +310,9 @@ ${timeNote}
 - 각 값은 80자 이내 권장
 - JSON 키 이름은 overall, love, wealth, career 고정`
 
-  const ai = new GoogleGenAI({ apiKey })
+  const ai = createAiClient(apiKey)
   try {
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: prompt,
-    })
-    const raw = (response?.text || '').trim()
+    const raw = await generateText(ai, prompt, { stream: false })
     if (!raw) throw new Error('오늘의 운세가 비었습니다.')
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
@@ -317,13 +362,11 @@ export async function fetchFeedOneLiner(resultText) {
 풀이:
 ${resultText.slice(0, 2500)}`
 
-  const ai = new GoogleGenAI({ apiKey })
+  const ai = createAiClient(apiKey)
   try {
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: prompt,
-    })
-    const text = (response?.text || '').trim().replace(/^["'「『]|["'」』]$/g, '')
+    const text = (await generateText(ai, prompt, { stream: false }))
+      .trim()
+      .replace(/^["'「『]|["'」』]$/g, '')
     if (!text) throw new Error('한 줄 요약이 비었습니다.')
     return text.slice(0, 40)
   } catch (err) {
