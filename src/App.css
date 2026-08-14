@@ -693,16 +693,20 @@
   inset: 0;
   z-index: 40;
   display: grid;
-  place-items: center;
-  padding: 1.25rem;
+  align-items: start;
+  justify-items: center;
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem max(1.25rem, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: rgba(63, 49, 41, 0.45);
 }
 
 .modal-card {
   width: min(28rem, 100%);
-  max-height: calc(100vh - 2.5rem);
-  overflow: auto;
-  padding: 1.5rem 1.25rem 1.4rem;
+  max-height: none;
+  margin: 0.5rem 0 1.5rem;
+  overflow: visible;
+  padding: 1.35rem 1.15rem 1.75rem;
   border-radius: 1.1rem;
   background: var(--apricot);
   box-shadow: 0 18px 40px rgba(63, 49, 41, 0.18);
@@ -718,6 +722,39 @@
   margin: 0 0 1.15rem;
   color: var(--ink-soft);
   line-height: 1.5;
+}
+
+/* 모달 안 생년월일 그리드가 세로로 과하게 커지지 않게 */
+.modal-card .birth-panel {
+  padding: 0.7rem;
+}
+
+.modal-card .birth-box {
+  aspect-ratio: auto;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.2rem;
+  font-size: 0.85rem;
+}
+
+.modal-card .birth-box--day {
+  min-height: 2.1rem;
+  padding: 0.35rem 0.15rem;
+}
+
+.modal-card .birth-grid--year {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.modal-card .field:last-of-type {
+  margin-bottom: 0.35rem;
+}
+
+.modal-card .submit-btn {
+  margin-top: 0.35rem;
+}
+
+.modal-card .ghost-btn {
+  margin-bottom: 0.25rem;
 }
 
 .live-feed {
