@@ -211,6 +211,92 @@ export async function fetchSajuReading({
 }
 
 /**
+ * 오늘의 운세 4항목(총운·연애·재물·직장)을 받아옵니다.
+ */
+export async function fetchTodayFortune({
+  name,
+  birthDate,
+  birthTime,
+  gender,
+  calendarLabel,
+  timeUnknown = false,
+}) {
+  const apiKey = getApiKey()
+  if (!apiKey) {
+    throw new Error(
+      'API 키가 없습니다. 프로젝트 루트 .env에 VITE_GEMINI_API_KEY를 넣고 개발 서버를 다시 실행해 주세요.',
+    )
+  }
+
+  const today = new Date()
+  const todayLabel = today.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  })
+  const timeNote = timeUnknown
+    ? '태어난 시간은 모름. 시주는 확정하지 말고 년·월·일 중심으로 보세요.'
+    : `태어난 시간: ${birthTime}`
+
+  const prompt = `당신은 사주·운세 상담가입니다. 아래 정보로 ${todayLabel}의 오늘의 운세만 작성하세요.
+
+이름: ${name}
+성별: ${gender}
+달력: ${calendarLabel}
+생년월일: ${birthDate}
+${timeNote}
+
+반드시 아래 JSON 형식만 출력하세요. 다른 문장·마크다운·코드펜스 금지.
+{
+  "overall": "총운 2~3문장",
+  "love": "연애운 2~3문장",
+  "wealth": "재물운 2~3문장",
+  "career": "직장·학업운 2~3문장"
+}
+
+규칙:
+- 한국어만
+- 단정적인 예언 대신 참고용 조언 톤
+- 각 값은 80자 이내 권장
+- JSON 키 이름은 overall, love, wealth, career 고정`
+
+  const ai = new GoogleGenAI({ apiKey })
+  try {
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: prompt,
+    })
+    const raw = (response?.text || '').trim()
+    if (!raw) throw new Error('오늘의 운세가 비었습니다.')
+
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('운세 형식을 읽지 못했습니다.')
+
+    const parsed = JSON.parse(jsonMatch[0])
+    const fortune = {
+      overall: String(parsed.overall || '').trim(),
+      love: String(parsed.love || '').trim(),
+      wealth: String(parsed.wealth || '').trim(),
+      career: String(parsed.career || '').trim(),
+      dateLabel: todayLabel,
+    }
+
+    if (!fortune.overall || !fortune.love || !fortune.wealth || !fortune.career) {
+      throw new Error('운세 항목이 비어 있습니다.')
+    }
+
+    return fortune
+  } catch (err) {
+    console.error('[saju] today fortune 실패:', err)
+    if (err instanceof SyntaxError) {
+      throw new Error('운세 결과를 해석하지 못했습니다. 다시 시도해 주세요.')
+    }
+    throw new Error(formatApiError(err) || '오늘의 운세를 불러오지 못했습니다.')
+  }
+}
+
+/**
  * 사주 풀이를 SNS용 한 줄(30자 이내)로 요약합니다. Realtime feed용.
  */
 export async function fetchFeedOneLiner(resultText) {

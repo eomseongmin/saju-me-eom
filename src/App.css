@@ -411,7 +411,8 @@
 .save-btn,
 .google-btn,
 .ghost-btn,
-.analyze-btn {
+.analyze-btn,
+.fortune-btn {
   display: block;
   width: 100%;
   margin: 0.35rem 0 0;
@@ -422,6 +423,91 @@
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.home-actions {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.fortune-btn {
+  border: 1px solid color-mix(in srgb, var(--apricot-deep) 35%, var(--line));
+  background: color-mix(in srgb, var(--peach) 55%, #ffffff);
+  color: var(--apricot-deep);
+}
+
+.fortune-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.fortune-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.today-fortune {
+  margin-top: 1rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--apricot) 55%, var(--line));
+  border-radius: 1rem;
+  background: #ffffff;
+  animation: result-in 0.35s ease-out both;
+}
+
+.today-fortune__header {
+  margin-bottom: 0.85rem;
+}
+
+.today-fortune__eyebrow {
+  margin: 0 0 0.25rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+}
+
+.today-fortune__title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.today-fortune__loading {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.today-fortune__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.today-fortune__card {
+  padding: 0.85rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--apricot) 22%, #ffffff);
+}
+
+.today-fortune__card h3 {
+  margin: 0 0 0.4rem;
+  color: var(--apricot-deep);
+  font-size: 0.92rem;
+}
+
+.today-fortune__card p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 420px) {
+  .today-fortune__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .submit-btn {

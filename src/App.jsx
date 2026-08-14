@@ -6,7 +6,8 @@ import ProfilePage from './ProfilePage'
 import ReadingsList from './ReadingsList'
 import ResultSkeleton from './ResultSkeleton'
 import SajuReading from './SajuReading'
-import { fetchFeedOneLiner, fetchSajuReading } from './fetchSajuReading'
+import TodayFortune from './TodayFortune'
+import { fetchFeedOneLiner, fetchSajuReading, fetchTodayFortune } from './fetchSajuReading'
 import { hasSupabaseEnv, supabase } from './supabase'
 import {
   birthTimeLabelFrom,
@@ -49,6 +50,9 @@ function App() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [readings, setReadings] = useState([])
   const [readingsLoading, setReadingsLoading] = useState(false)
+  const [fortuneLoading, setFortuneLoading] = useState(false)
+  const [fortune, setFortune] = useState(null)
+  const [fortuneError, setFortuneError] = useState('')
 
   const genderLabel = form.gender === 'male' ? '남성' : form.gender === 'female' ? '여성' : '-'
   const calendarLabel = form.calendar === 'lunar' ? '음력' : '양력'
@@ -63,6 +67,8 @@ function App() {
     setSajuText('')
     setError('')
     setSaved(false)
+    setFortune(null)
+    setFortuneError('')
   }
 
   async function loadReadings() {
@@ -208,6 +214,7 @@ function App() {
     }
 
     setError('')
+    setFortuneError('')
     setLoading(true)
     setShowResult(true)
     setSajuText('')
@@ -236,6 +243,33 @@ function App() {
       if (!gotChunk) setShowResult(false)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleTodayFortune() {
+    if (!isProfileFormComplete(form)) {
+      setFortuneError('프로필 정보가 부족합니다. 프로필에서 먼저 입력해 주세요.')
+      return
+    }
+
+    setFortuneError('')
+    setFortuneLoading(true)
+    setFortune(null)
+
+    try {
+      const data = await fetchTodayFortune({
+        name: form.name.trim(),
+        birthDate: form.birthDate,
+        birthTime: birthTimeLabel,
+        gender: genderLabel,
+        calendarLabel,
+        timeUnknown: form.timeUnknown,
+      })
+      setFortune(data)
+    } catch (err) {
+      setFortuneError(err?.message || '오늘의 운세를 불러오지 못했습니다.')
+    } finally {
+      setFortuneLoading(false)
     }
   }
 
@@ -421,14 +455,30 @@ function App() {
                     </div>
                   </section>
 
-                  <button
-                    type="button"
-                    className="submit-btn"
-                    onClick={handleSeeResult}
-                    disabled={loading}
-                  >
-                    {loading ? '사주 해석 중…' : '사주 결과 보기'}
-                  </button>
+                  <div className="home-actions">
+                    <button
+                      type="button"
+                      className="submit-btn"
+                      onClick={handleSeeResult}
+                      disabled={loading || fortuneLoading}
+                    >
+                      {loading ? '사주 해석 중…' : '사주 결과 보기'}
+                    </button>
+                    <button
+                      type="button"
+                      className="fortune-btn"
+                      onClick={handleTodayFortune}
+                      disabled={loading || fortuneLoading}
+                    >
+                      {fortuneLoading ? '운세 보는 중…' : '오늘의 운세'}
+                    </button>
+                  </div>
+
+                  <TodayFortune
+                    fortune={fortune}
+                    loading={fortuneLoading}
+                    error={fortuneError}
+                  />
                 </>
               ) : null}
 
