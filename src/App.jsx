@@ -474,6 +474,7 @@ function App() {
           saving={savingProfile}
           error={profileError}
           onSave={saveProfile}
+          onSignOut={handleSignOut}
         />
       )}
     </main>

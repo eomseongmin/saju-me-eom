@@ -4,6 +4,7 @@ function ProfileModal({
   form,
   onFormChange,
   onSave,
+  onSignOut,
   saving,
   error,
 }) {
@@ -37,6 +38,14 @@ function ProfileModal({
 
         <button type="button" className="submit-btn" onClick={onSave} disabled={saving}>
           {saving ? '저장 중…' : '저장하고 시작하기'}
+        </button>
+        <button
+          type="button"
+          className="ghost-btn"
+          onClick={onSignOut}
+          disabled={saving}
+        >
+          로그아웃
         </button>
       </div>
     </div>
