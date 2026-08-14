@@ -1,10 +1,12 @@
 import { startTransition, useEffect, useState } from 'react'
 import AuthScreen from './AuthScreen'
+import LiveFeed from './LiveFeed'
 import ProfileModal from './ProfileModal'
 import ProfilePage from './ProfilePage'
+import ReadingsList from './ReadingsList'
 import ResultSkeleton from './ResultSkeleton'
 import SajuReading from './SajuReading'
-import { fetchSajuReading } from './fetchSajuReading'
+import { fetchFeedOneLiner, fetchSajuReading } from './fetchSajuReading'
 import { hasSupabaseEnv, supabase } from './supabase'
 import {
   birthTimeLabelFrom,
@@ -23,6 +25,12 @@ const EMPTY_FORM = {
   calendar: 'solar',
 }
 
+function anonymousNickname(name) {
+  const trimmed = (name || '').trim()
+  if (!trimmed) return '익명의 손님'
+  return `${trimmed[0]}**`
+}
+
 function App() {
   const [session, setSession] = useState(null)
   const [authReady, setAuthReady] = useState(false)
@@ -37,7 +45,10 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [sajuText, setSajuText] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
+  const [readings, setReadings] = useState([])
+  const [readingsLoading, setReadingsLoading] = useState(false)
 
   const genderLabel = form.gender === 'male' ? '남성' : form.gender === 'female' ? '여성' : '-'
   const calendarLabel = form.calendar === 'lunar' ? '음력' : '양력'
@@ -51,6 +62,30 @@ function App() {
     setShowResult(false)
     setSajuText('')
     setError('')
+    setSaved(false)
+  }
+
+  async function loadReadings() {
+    if (!supabase || !session?.user?.id) {
+      setReadings([])
+      return
+    }
+
+    setReadingsLoading(true)
+    const { data, error: loadError } = await supabase
+      .from('readings')
+      .select('id, name, birth, birth_time, gender, result, created_at')
+      .order('created_at', { ascending: false })
+
+    setReadingsLoading(false)
+
+    if (loadError) {
+      console.error(loadError)
+      setReadings([])
+      return
+    }
+
+    setReadings(data ?? [])
   }
 
   useEffect(() => {
@@ -77,6 +112,7 @@ function App() {
       setProfileReady(false)
       setForm(EMPTY_FORM)
       setView('home')
+      setReadings([])
       resetResultView()
       return
     }
@@ -109,6 +145,35 @@ function App() {
       cancelled = true
     }
   }, [session?.user?.id])
+
+  useEffect(() => {
+    if (!session?.user?.id || !profile?.id) {
+      setReadings([])
+      return
+    }
+
+    let cancelled = false
+    setReadingsLoading(true)
+
+    supabase
+      .from('readings')
+      .select('id, name, birth, birth_time, gender, result, created_at')
+      .order('created_at', { ascending: false })
+      .then(({ data, error: loadError }) => {
+        if (cancelled) return
+        setReadingsLoading(false)
+        if (loadError) {
+          console.error(loadError)
+          setReadings([])
+          return
+        }
+        setReadings(data ?? [])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [session?.user?.id, profile?.id])
 
   async function saveProfile() {
     if (!session?.user?.id) return false
@@ -146,6 +211,7 @@ function App() {
     setLoading(true)
     setShowResult(true)
     setSajuText('')
+    setSaved(false)
 
     let gotChunk = false
 
@@ -174,7 +240,7 @@ function App() {
   }
 
   async function saveReading() {
-    if (!sajuText || loading || saving || !session?.user?.id || !profile) return
+    if (!sajuText || loading || saving || saved || !session?.user?.id || !profile) return
 
     setSaving(true)
     const { error: saveError } = await supabase.from('readings').insert({
@@ -185,13 +251,41 @@ function App() {
       gender: form.gender,
       result: sajuText,
     })
-    setSaving(false)
 
     if (saveError) {
+      setSaving(false)
       alert('저장 실패: ' + saveError.message)
       return
     }
-    alert('저장 완료! 🔮')
+
+    try {
+      const oneLiner = await fetchFeedOneLiner(sajuText)
+      const { error: feedError } = await supabase.from('feed').insert({
+        nickname: anonymousNickname(form.name),
+        one_liner: oneLiner,
+      })
+      if (feedError) {
+        console.error(feedError)
+        alert('풀이는 저장됐지만 피드 등록에 실패했습니다: ' + feedError.message)
+      }
+    } catch (err) {
+      console.error(err)
+      alert('풀이는 저장됐지만 한 줄 요약을 만들지 못했습니다.')
+    }
+
+    await loadReadings()
+    setSaving(false)
+    setSaved(true)
+  }
+
+  async function deleteReading(id) {
+    if (!supabase || !id) return
+    const { error: deleteError } = await supabase.from('readings').delete().eq('id', id)
+    if (deleteError) {
+      alert('삭제 실패: ' + deleteError.message)
+      return
+    }
+    await loadReadings()
   }
 
   async function handleSignOut() {
@@ -276,16 +370,61 @@ function App() {
           }}
         />
       ) : (
-        <div className="app-card">
-          <h1 className="brand">사주미</h1>
-          {profile ? (
-            <>
-              <p className="lead">{profile.name}님, 저장된 정보로 사주를 볼게요.</p>
-              <section className="profile-summary">
+        <>
+          <LiveFeed />
+
+          <div className="app-card">
+            <h1 className="brand">사주미</h1>
+            {profile ? (
+              <>
+                <p className="lead">{profile.name}님, 저장된 정보로 사주를 볼게요.</p>
+                <section className="profile-summary">
+                  <ul>
+                    <li>
+                      <strong>이름</strong> {form.name}
+                    </li>
+                    <li>
+                      <strong>생년월일</strong> {form.birthDate} ({calendarLabel})
+                    </li>
+                    <li>
+                      <strong>태어난 시간</strong> {birthTimeLabel}
+                    </li>
+                    <li>
+                      <strong>성별</strong> {genderLabel}
+                    </li>
+                  </ul>
+                  <button
+                    type="button"
+                    className="ghost-btn ghost-btn--compact"
+                    onClick={() => {
+                      setForm(formFromProfile(profile))
+                      setProfileError('')
+                      setView('profile')
+                    }}
+                  >
+                    프로필 수정
+                  </button>
+                </section>
+
+                <button
+                  type="button"
+                  className="submit-btn"
+                  onClick={handleSeeResult}
+                  disabled={loading}
+                >
+                  {loading ? '사주 해석 중…' : '사주 결과 보기'}
+                </button>
+              </>
+            ) : (
+              <p className="lead">사주를 보려면 기본 정보를 먼저 입력해 주세요.</p>
+            )}
+
+            {error && <p className="error">{error}</p>}
+
+            {showResult && (
+              <section className="result-panel">
+                <h2>{form.name}님의 사주</h2>
                 <ul>
-                  <li>
-                    <strong>이름</strong> {form.name}
-                  </li>
                   <li>
                     <strong>생년월일</strong> {form.birthDate} ({calendarLabel})
                   </li>
@@ -296,69 +435,36 @@ function App() {
                     <strong>성별</strong> {genderLabel}
                   </li>
                 </ul>
-                <button
-                  type="button"
-                  className="ghost-btn ghost-btn--compact"
-                  onClick={() => {
-                    setForm(formFromProfile(profile))
-                    setProfileError('')
-                    setView('profile')
-                  }}
-                >
-                  프로필 수정
-                </button>
+
+                {loading && !sajuText ? (
+                  <ResultSkeleton />
+                ) : sajuText ? (
+                  <>
+                    <SajuReading text={sajuText} streaming={loading} />
+                    {!loading && (
+                      <button
+                        type="button"
+                        className="save-btn"
+                        onClick={saveReading}
+                        disabled={saving || saved}
+                      >
+                        {saving ? '저장 중…' : saved ? '저장됨 ✓' : '이 풀이 저장하기'}
+                      </button>
+                    )}
+                  </>
+                ) : null}
               </section>
+            )}
+          </div>
 
-              <button
-                type="button"
-                className="submit-btn"
-                onClick={handleSeeResult}
-                disabled={loading}
-              >
-                {loading ? '사주 해석 중…' : '사주 결과 보기'}
-              </button>
-            </>
-          ) : (
-            <p className="lead">사주를 보려면 기본 정보를 먼저 입력해 주세요.</p>
+          {profile && (
+            <ReadingsList
+              readings={readings}
+              loading={readingsLoading}
+              onDelete={deleteReading}
+            />
           )}
-
-          {error && <p className="error">{error}</p>}
-
-          {showResult && (
-            <section className="result-panel">
-              <h2>{form.name}님의 사주</h2>
-              <ul>
-                <li>
-                  <strong>생년월일</strong> {form.birthDate} ({calendarLabel})
-                </li>
-                <li>
-                  <strong>태어난 시간</strong> {birthTimeLabel}
-                </li>
-                <li>
-                  <strong>성별</strong> {genderLabel}
-                </li>
-              </ul>
-
-              {loading && !sajuText ? (
-                <ResultSkeleton />
-              ) : sajuText ? (
-                <>
-                  <SajuReading text={sajuText} streaming={loading} />
-                  {!loading && (
-                    <button
-                      type="button"
-                      className="save-btn"
-                      onClick={saveReading}
-                      disabled={saving}
-                    >
-                      {saving ? '저장 중…' : '이 풀이 저장하기'}
-                    </button>
-                  )}
-                </>
-              ) : null}
-            </section>
-          )}
-        </div>
+        </>
       )}
 
       {needsOnboarding && (

@@ -206,3 +206,39 @@ export async function fetchSajuReading({
       '사주 결과를 받지 못했습니다. 잠시 후 다시 시도해 주세요.',
   )
 }
+
+/**
+ * 사주 풀이를 SNS용 한 줄(30자 이내)로 요약합니다. Realtime feed용.
+ */
+export async function fetchFeedOneLiner(resultText) {
+  const apiKey = getApiKey()
+  if (!apiKey) {
+    throw new Error('API 키가 없습니다. VITE_GEMINI_API_KEY를 확인해 주세요.')
+  }
+
+  const prompt = `다음 사주 풀이를 SNS 한 줄로 요약하세요.
+
+규칙:
+- 닉네임·이름·생년월일·성별 등 개인정보 절대 포함 금지
+- 한국어만
+- 30자 이내
+- 이모지 정확히 1개
+- 따옴표·마크다운·설명문 없이 한 줄만 출력
+
+풀이:
+${resultText.slice(0, 2500)}`
+
+  const ai = new GoogleGenAI({ apiKey })
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    })
+    const text = (response?.text || '').trim().replace(/^["'「『]|["'」』]$/g, '')
+    if (!text) throw new Error('한 줄 요약이 비었습니다.')
+    return text.slice(0, 40)
+  } catch (err) {
+    console.error('[saju] feed one-liner 실패:', err)
+    throw new Error(formatApiError(err) || '한 줄 요약을 만들지 못했습니다.')
+  }
+}

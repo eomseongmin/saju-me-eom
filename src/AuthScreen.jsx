@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
 function AuthScreen() {
@@ -7,6 +7,14 @@ function AuthScreen() {
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const errorDescription = params.get('error_description') || params.get('error')
+    if (errorDescription) {
+      setMessage(decodeURIComponent(errorDescription.replace(/\+/g, ' ')))
+    }
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -31,11 +39,38 @@ function AuthScreen() {
     }
   }
 
+  async function handleGoogleLogin() {
+    if (!supabase) return
+    setMessage('')
+    setBusy(true)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    })
+    if (error) {
+      setBusy(false)
+      setMessage(error.message)
+    }
+  }
+
   return (
     <main className="app">
       <div className="app-card">
         <h1 className="brand">사주미</h1>
         <p className="lead">로그인하면 내 정보로 바로 사주를 볼 수 있어요.</p>
+
+        <button
+          type="button"
+          className="google-btn"
+          onClick={handleGoogleLogin}
+          disabled={busy}
+        >
+          Google로 계속하기
+        </button>
+
+        <p className="auth-divider">또는 이메일로</p>
 
         <div className="auth-tabs">
           <button
