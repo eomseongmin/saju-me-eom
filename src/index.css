@@ -3,21 +3,30 @@
 }
 
 :root {
-  --apricot: #f0c2a4;
-  --apricot-deep: #d4845c;
-  --peach: #f5d4bc;
-  --blush: #e89a8c;
-  --sand: #f3e6da;
-  --sky: #cfe8f5;
-  --ink: #3f3129;
-  --ink-soft: #7a6558;
-  --surface: #ffffff;
-  --surface-strong: #ffffff;
-  --line: rgba(63, 49, 41, 0.14);
+  --bg: #ffffff;
+  --bg-soft: #f4f3ec;
+  --ink: #08060d;
+  --ink-soft: #6b6375;
+  --line: #e5e4e7;
+  --accent: #0f766e;
+  --accent-soft: #0f766e1f;
+  --accent-deep: #0d9488;
+  --danger: #b91c1c;
+  --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --font-display: 'Gowun Batang', 'Noto Serif KR', serif;
   --font-body: 'Noto Sans KR', sans-serif;
-  --coral: var(--blush);
-  --lime: var(--sand);
+
+  /* 기존 클래스 호환 */
+  --apricot: var(--bg-soft);
+  --apricot-deep: var(--accent);
+  --peach: #ecfdf5;
+  --blush: #99f6e4;
+  --sand: var(--bg-soft);
+  --sky: #ecfeff;
+  --surface: var(--bg);
+  --surface-strong: var(--bg);
+  --coral: var(--accent);
+  --lime: var(--bg-soft);
   --mint: var(--peach);
 }
 
@@ -30,8 +39,10 @@ body {
 body {
   min-height: 100vh;
   font-family: var(--font-body);
-  color: var(--ink);
-  background: #ffffff;
+  color: var(--ink-soft);
+  background:
+    radial-gradient(circle at top left, var(--accent-soft), transparent 42%),
+    var(--bg);
 }
 
 #root {

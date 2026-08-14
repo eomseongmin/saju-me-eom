@@ -294,13 +294,13 @@ function App() {
 
   if (!hasSupabaseEnv) {
     return (
-      <main className="app">
-        <div className="app-card">
+      <main className="auth-screen">
+        <div className="auth-card">
           <h1 className="brand">사주미</h1>
-          <p className="lead">
+          <p className="auth-desc">
             배포 환경 변수가 없습니다. Vercel에 아래 값을 넣고 다시 배포해 주세요.
           </p>
-          <ul className="profile-summary">
+          <ul className="env-missing">
             <li>VITE_SUPABASE_URL</li>
             <li>VITE_SUPABASE_ANON_KEY</li>
             <li>VITE_GEMINI_API_KEY</li>
@@ -312,9 +312,9 @@ function App() {
 
   if (!authReady) {
     return (
-      <main className="app">
-        <div className="app-card">
-          <p className="lead">불러오는 중…</p>
+      <main className="auth-screen">
+        <div className="auth-card">
+          <p className="auth-desc">불러오는 중…</p>
         </div>
       </main>
     )
@@ -327,121 +327,133 @@ function App() {
   const needsOnboarding = profileReady && !profile
 
   return (
-    <main className="app">
-      <header className="topbar">
-        <button type="button" className="topbar-brand" onClick={() => setView('home')}>
-          사주미
-        </button>
-        <div className="topbar-actions">
-          <button
-            type="button"
-            className={`topbar-link ${view === 'profile' ? 'is-active' : ''}`}
-            onClick={() => {
-              if (profile) {
-                setForm(formFromProfile(profile))
-                setProfileError('')
-                setView('profile')
-              }
-            }}
-            disabled={!profile}
-          >
-            프로필
-          </button>
-          <button type="button" className="topbar-link" onClick={handleSignOut}>
-            로그아웃
-          </button>
-        </div>
-      </header>
-
-      {view === 'profile' && profile ? (
-        <ProfilePage
-          form={form}
-          onFormChange={updateForm}
-          saving={savingProfile}
-          error={profileError}
-          onBack={() => {
-            setForm(formFromProfile(profile))
-            setProfileError('')
-            setView('home')
-          }}
-          onSave={async () => {
-            const ok = await saveProfile()
-            if (ok) setView('home')
-          }}
+    <div className="layout">
+      {profile && view === 'home' && (
+        <ReadingsList
+          readings={readings}
+          loading={readingsLoading}
+          onDelete={deleteReading}
         />
-      ) : (
-        <>
-          <LiveFeed />
+      )}
 
-          <div className="app-card">
-            <h1 className="brand">사주미</h1>
-            {profile ? (
-              <>
-                <p className="lead">{profile.name}님, 저장된 정보로 사주를 볼게요.</p>
-                <section className="profile-summary">
-                  <ul>
-                    <li>
-                      <strong>이름</strong> {form.name}
-                    </li>
-                    <li>
-                      <strong>생년월일</strong> {form.birthDate} ({calendarLabel})
-                    </li>
-                    <li>
-                      <strong>태어난 시간</strong> {birthTimeLabel}
-                    </li>
-                    <li>
-                      <strong>성별</strong> {genderLabel}
-                    </li>
-                  </ul>
+      <main className="app">
+        <header className="topbar">
+          <button type="button" className="topbar-brand" onClick={() => setView('home')}>
+            사주미
+          </button>
+          <div className="topbar-actions">
+            <button
+              type="button"
+              className={`topbar-link ${view === 'profile' ? 'is-active' : ''}`}
+              onClick={() => {
+                if (profile) {
+                  setForm(formFromProfile(profile))
+                  setProfileError('')
+                  setView('profile')
+                }
+              }}
+              disabled={!profile}
+            >
+              프로필
+            </button>
+            <button type="button" className="topbar-link" onClick={handleSignOut}>
+              로그아웃
+            </button>
+          </div>
+        </header>
+
+        {view === 'profile' && profile ? (
+          <ProfilePage
+            form={form}
+            onFormChange={updateForm}
+            saving={savingProfile}
+            error={profileError}
+            onBack={() => {
+              setForm(formFromProfile(profile))
+              setProfileError('')
+              setView('home')
+            }}
+            onSave={async () => {
+              const ok = await saveProfile()
+              if (ok) setView('home')
+            }}
+          />
+        ) : (
+          <>
+            <LiveFeed />
+
+            <section className="panel">
+              <div className="app-header">
+                <h1 className="brand">사주미</h1>
+                {profile ? (
+                  <p className="lead">{profile.name}님, 저장된 정보로 사주를 볼게요.</p>
+                ) : (
+                  <p className="lead">사주를 보려면 기본 정보를 먼저 입력해 주세요.</p>
+                )}
+              </div>
+
+              {profile ? (
+                <>
+                  <section className="profile-summary">
+                    <div className="profile-summary-top">
+                      <div>
+                        <p className="profile-summary-label">내 프로필</p>
+                        <p className="profile-summary-name">{form.name}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="ghost-btn ghost-btn--compact"
+                        onClick={() => {
+                          setForm(formFromProfile(profile))
+                          setProfileError('')
+                          setView('profile')
+                        }}
+                      >
+                        수정
+                      </button>
+                    </div>
+                    <div className="profile-chips">
+                      <span className="chip">
+                        {form.birthDate} ({calendarLabel})
+                      </span>
+                      <span className="chip">{birthTimeLabel}</span>
+                      <span className="chip">{genderLabel}</span>
+                    </div>
+                  </section>
+
                   <button
                     type="button"
-                    className="ghost-btn ghost-btn--compact"
-                    onClick={() => {
-                      setForm(formFromProfile(profile))
-                      setProfileError('')
-                      setView('profile')
-                    }}
+                    className="submit-btn"
+                    onClick={handleSeeResult}
+                    disabled={loading}
                   >
-                    프로필 수정
+                    {loading ? '사주 해석 중…' : '사주 결과 보기'}
                   </button>
-                </section>
+                </>
+              ) : null}
 
-                <button
-                  type="button"
-                  className="submit-btn"
-                  onClick={handleSeeResult}
-                  disabled={loading}
-                >
-                  {loading ? '사주 해석 중…' : '사주 결과 보기'}
-                </button>
-              </>
-            ) : (
-              <p className="lead">사주를 보려면 기본 정보를 먼저 입력해 주세요.</p>
-            )}
+              {error && <p className="error">{error}</p>}
 
-            {error && <p className="error">{error}</p>}
+              {showResult && (
+                <section className="result">
+                  <div className="result-header">
+                    <p className="result-eyebrow">사주 결과</p>
+                    <h2 className="result-title">{form.name}님의 사주</h2>
+                    <p className="result-meta">
+                      {form.birthDate} ({calendarLabel}) · {birthTimeLabel} · {genderLabel}
+                    </p>
+                  </div>
 
-            {showResult && (
-              <section className="result-panel">
-                <h2>{form.name}님의 사주</h2>
-                <ul>
-                  <li>
-                    <strong>생년월일</strong> {form.birthDate} ({calendarLabel})
-                  </li>
-                  <li>
-                    <strong>태어난 시간</strong> {birthTimeLabel}
-                  </li>
-                  <li>
-                    <strong>성별</strong> {genderLabel}
-                  </li>
-                </ul>
+                  <div className="result-content">
+                    {loading && !sajuText ? (
+                      <ResultSkeleton />
+                    ) : sajuText ? (
+                      <SajuReading text={sajuText} streaming={loading} />
+                    ) : null}
+                  </div>
 
-                {loading && !sajuText ? (
-                  <ResultSkeleton />
-                ) : sajuText ? (
-                  <>
-                    <SajuReading text={sajuText} streaming={loading} />
-                    {!loading && (
+                  {!loading && sajuText ? (
+                    <div className="result-footer">
                       <button
                         type="button"
                         className="save-btn"
@@ -450,22 +462,14 @@ function App() {
                       >
                         {saving ? '저장 중…' : saved ? '저장됨 ✓' : '이 풀이 저장하기'}
                       </button>
-                    )}
-                  </>
-                ) : null}
-              </section>
-            )}
-          </div>
-
-          {profile && (
-            <ReadingsList
-              readings={readings}
-              loading={readingsLoading}
-              onDelete={deleteReading}
-            />
-          )}
-        </>
-      )}
+                    </div>
+                  ) : null}
+                </section>
+              )}
+            </section>
+          </>
+        )}
+      </main>
 
       {needsOnboarding && (
         <ProfileModal
@@ -477,7 +481,7 @@ function App() {
           onSignOut={handleSignOut}
         />
       )}
-    </main>
+    </div>
   )
 }
 

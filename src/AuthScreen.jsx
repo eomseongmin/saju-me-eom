@@ -56,10 +56,11 @@ function AuthScreen() {
   }
 
   return (
-    <main className="app">
-      <div className="app-card">
+    <main className="auth-screen">
+      <div className="auth-card">
+        <p className="auth-eyebrow">사주 해석 서비스</p>
         <h1 className="brand">사주미</h1>
-        <p className="lead">로그인하면 내 정보로 바로 사주를 볼 수 있어요.</p>
+        <p className="auth-desc">로그인하면 내 정보로 바로 사주를 볼 수 있어요.</p>
 
         <button
           type="button"

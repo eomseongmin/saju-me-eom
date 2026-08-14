@@ -9,7 +9,7 @@ function ProfilePage({
   error,
 }) {
   return (
-    <div className="app-card">
+    <div className="panel">
       <h1 className="brand">프로필</h1>
       <p className="lead">저장된 사주 정보를 수정할 수 있어요.</p>
 
